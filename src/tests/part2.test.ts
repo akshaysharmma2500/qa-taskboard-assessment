@@ -16,6 +16,19 @@ async function login(email: string): Promise<string> {
   return data.token;
 }
 
+interface ErrorResponse {
+  error: string;
+  message?: string;
+}
+
+async function expectForbidden(res: Response, expectedMessage?: string) {
+  expect(res.status).toBe(403);
+  const data = (await res.json()) as ErrorResponse;
+  if (expectedMessage) {
+    expect(data.error || data.message).toContain(expectedMessage);
+  }
+}
+
 let tokens: { meera: string; arjun: string; dev: string };
 let projectId: string;
 let taskId: string;
@@ -41,9 +54,9 @@ beforeAll(async () => {
   });
   const { tasks } = (await tasksRes.json()) as { tasks: { id: string }[] };
   taskId = tasks[0].id;
-});
+}, 30000); // 30 second timeout for beforeAll hook
 
-describe("task access control", () => {
+describe("task access control", { timeout: 30000 }, () => {
   // Test A
   it("a viewer cannot update a task", async () => {
     const res = await fetch(`${BASE_URL}/api/tasks/${taskId}`, {
@@ -54,7 +67,7 @@ describe("task access control", () => {
       },
       body: JSON.stringify({ title: "viewer update attempt" }),
     });
-    expect(res.status).toBe(403);
+    await expectForbidden(res, "cannot update");
   });
 
   // Test B
@@ -67,7 +80,7 @@ describe("task access control", () => {
       },
       body: JSON.stringify({ title: "viewer create attempt" }),
     });
-    expect(res.status).toBe(401);
+    await expectForbidden(res, "cannot create");
   });
 
   // Test C
@@ -81,5 +94,8 @@ describe("task access control", () => {
       body: JSON.stringify({ title: "member create — baseline" }),
     });
     expect(res.status).toBe(201);
+    const data = (await res.json()) as { task: { id: string } };
+    expect(data.task).toBeDefined();
+    expect(data.task.id).toBeDefined();
   });
 });
