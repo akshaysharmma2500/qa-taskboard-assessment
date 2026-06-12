@@ -2,6 +2,10 @@
 
 A Next.js 15 fullstack application for managing projects, tasks, and team members. TypeScript + Prisma + PostgreSQL on the server, React 19 + TanStack Query on the client.
 
+# Video Link
+
+Link: https://www.loom.com/share/d5b0282d6de8423d8cb670f5b9f9d2e8
+
 ## Quick Setup (Docker — Recommended)
 
 ```bash
