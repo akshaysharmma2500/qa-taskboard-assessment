@@ -163,6 +163,56 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ---
 
+---
+
+## 🔵 Exploratory Findings
+
+### 6. Missing Validation Error Messages on Login/Registration
+**Category:** User Experience | **Severity:** MEDIUM
+
+> When a user submits invalid credentials (e.g., invalid email format, weak password, existing email on registration), the app silently fails or shows generic error messages, but it should display specific, actionable validation messages for each field.
+
+**Explanation:**  
+The authentication endpoints lack detailed validation feedback. Users cannot understand what went wrong with their input (e.g., "Password must be at least 8 characters" vs. just "Invalid input"). This creates a poor user experience and makes the app appear broken rather than helpful.
+
+**Affected Files:**
+- [src/app/api/auth/login/route.ts](src/app/api/auth/login/route.ts)
+- [src/app/api/auth/register/route.ts](src/app/api/auth/register/route.ts)
+- [src/schemas/auth.ts](src/schemas/auth.ts)
+
+---
+
+### 7. Cached User Data Persists After Sign Out
+**Category:** Security/Privacy | **Severity:** MEDIUM
+
+> When a user signs out, the app retains cached user data and project information in memory/local storage, but it should clear all cached data so subsequent login attempts show only the new user's data.
+
+**Explanation:**  
+After logout, if a previously logged-in user's session data remains in the cache, a new user logging into the same browser/device could potentially see remnants of the previous user's projects, tasks, or personal information before the cache is fully refreshed. This violates privacy expectations and could expose sensitive information in shared environments.
+
+**Affected Files:**
+- [src/components/QueryProvider.tsx](src/components/QueryProvider.tsx)
+- [src/app/api/auth/login/route.ts](src/app/api/auth/login/route.ts)
+- [src/lib/api-client.ts](src/lib/api-client.ts)
+
+---
+
+### 8. Missing Route Protection with Proper Middleware/Loader
+**Category:** Architecture | **Severity:** MEDIUM
+
+> When a user accesses a protected route (e.g., `/dashboard`, `/projects/[id]`) without a valid authentication token, the app redirects to the dashboard first and then redirects to login, but it should implement proper middleware or page loaders that check authentication before rendering and redirect directly to login if no token is found.
+
+**Explanation:**  
+Currently, authentication is checked inside page components with manual redirects, causing unnecessary page renders and confusing redirect chains. Proper Next.js middleware or loaders should validate tokens at request-time before any page loads, providing a cleaner user experience and better security by preventing any unauthenticated access to protected pages.
+
+**Affected Files:**
+- [src/app/dashboard/page.tsx](src/app/dashboard/page.tsx)
+- [src/app/projects/[id]/page.tsx](src/app/projects/[id]/page.tsx)
+- [src/app/layout.tsx](src/app/layout.tsx)
+- [src/lib/auth.ts](src/lib/auth.ts)
+
+---
+
 ## Summary of Priority
 
 | Priority | Issue | Impact | Effort |
@@ -172,4 +222,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 | 3 | Hard Deletes | 🟠 Permanent data loss | High |
 | 4 | N+1 Queries | 🟠 Severe performance degradation | Medium |
 | 5 | Error Middleware | 🟡 Maintainability debt | Medium |
+| 6 | Missing Validation Messages | 🔵 Poor UX | Low |
+| 7 | Cached Data After Logout | 🔵 Privacy/Security concern | Medium |
+| 8 | Missing Auth Middleware | 🔵 Architecture issue | Medium |
 
